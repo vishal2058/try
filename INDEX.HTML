@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>School Document Portal</title>
+<style>
+body {
+  font-family: Arial;
+  margin: 0;
+  background: #f4f6f9;
+}
+
+header {
+  background: #1e3a8a;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 22px;
+}
+
+.container {
+  width: 90%;
+  max-width: 1000px;
+  margin: 30px auto;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h2 {
+  color: #1e3a8a;
+}
+
+select, input, button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  margin-bottom: 15px;
+}
+
+button {
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #162c6b;
+}
+
+.file-card {
+  background: #eef2ff;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<header>📚 School Document Portal</header>
+
+<div class="container">
+<h2>🔐 Admin Upload Section</h2>
+
+<label>Class</label>
+<select id="class" onchange="toggleStream()">
+<option value="">Select</option>
+<option>3 STD</option>
+<option>4 STD</option>
+<option>5 STD</option>
+<option>6 STD</option>
+<option>7 STD</option>
+<option>8 STD</option>
+<option>9 STD</option>
+<option>10 STD</option>
+<option>11 STD</option>
+<option>12 STD</option>
+</select>
+
+<div id="streamDiv" style="display:none;">
+<label>Stream</label>
+<select id="stream">
+<option>Science</option>
+<option>Commerce</option>
+</select>
+</div>
+
+<label>Subject</label>
+<input type="text" id="subject" placeholder="Enter Subject">
+
+<label>Select PDF</label>
+<input type="file" id="pdf" accept="application/pdf">
+
+<button onclick="uploadPDF()">Upload PDF</button>
+
+</div>
+
+
+<div class="container">
+<h2>🎓 Student Section</h2>
+
+<label>Class</label>
+<select id="viewClass" onchange="toggleViewStream()">
+<option value="">Select</option>
+<option>3 STD</option>
+<option>4 STD</option>
+<option>5 STD</option>
+<option>6 STD</option>
+<option>7 STD</option>
+<option>8 STD</option>
+<option>9 STD</option>
+<option>10 STD</option>
+<option>11 STD</option>
+<option>12 STD</option>
+</select>
+
+<div id="viewStreamDiv" style="display:none;">
+<label>Stream</label>
+<select id="viewStream">
+<option>Science</option>
+<option>Commerce</option>
+</select>
+</div>
+
+<label>Subject</label>
+<input type="text" id="viewSubject" placeholder="Enter Subject">
+
+<button onclick="loadFiles()">View PDFs</button>
+
+<div id="fileList"></div>
+</div>
+
+
+<script>
+
+const API_URL = "https://script.google.com/macros/s/AKfycbxVCBY-2fZiWZKs-XJ4encydbf0cc8vtnrDn9qxTfpfs9x8Go1_psQF6V0abtCGjMEQdA/exec";
+
+function toggleStream(){
+  document.getElementById("streamDiv").style.display =
+    document.getElementById("class").value === "12 STD" ? "block" : "none";
+}
+
+function toggleViewStream(){
+  document.getElementById("viewStreamDiv").style.display =
+    document.getElementById("viewClass").value === "12 STD" ? "block" : "none";
+}
+
+function uploadPDF(){
+  const file = document.getElementById("pdf").files[0];
+  const className = document.getElementById("class").value;
+  const stream = document.getElementById("stream").value;
+  const subject = document.getElementById("subject").value;
+
+  if(!file || !className || !subject){
+    alert("Please fill all fields");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const base64 = e.target.result.split(',')[1];
+
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        fileData: base64,
+        fileName: file.name,
+        className: className,
+        stream: stream,
+        subject: subject
+      })
+    }).then(res => res.text())
+      .then(data => alert("Uploaded Successfully!"));
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadFiles(){
+  const className = document.getElementById("viewClass").value;
+  const stream = document.getElementById("viewStream").value;
+  const subject = document.getElementById("viewSubject").value;
+
+  fetch(`${API_URL}?action=getFiles&className=${className}&stream=${stream}&subject=${subject}`)
+  .then(res => res.json())
+  .then(files => {
+    let html = "";
+    files.forEach(file => {
+      html += `<div class="file-card">
+                <a href="${file.url}" target="_blank">${file.name}</a>
+               </div>`;
+    });
+    document.getElementById("fileList").innerHTML = html;
+  });
+}
+
+</script>
+
+</body>
+</html>
